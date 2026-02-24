@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1>Linear pot data</h1>
+<div id="data">Waiting...</div>
+<canvas id="LP_chart" width="800" height="300"></canvas>
+
+<h1>Steering angle</h1>
+<div class="steering">
+    <p id="Steering_angle">No data</p>
+    <canvas id="Steering_chart" width="600" height="300"></canvas>
+</div>
+
+<script>
+// Charts setup
+const LPctx = document.getElementById('LP_chart').getContext('2d');
+const maxDataPoints = 50;
+const linearPotData = {
+  labels: [],
+  datasets: [{
+    label: 'Shock 1',
+    data: [],
+    borderColor: '#4CAF50',
+    borderWidth: 2,
+    fill: false
+  }]
+};
+const Steeringctx = document.getElementById('Steering_chart').getContext('2d');
+const steeringData = {
+  labels: [],
+  datasets: [{
+    label: 'angle',
+    data: [4096, 0],
+    backgroundColor: [
+      'rgb(255, 99, 132)',
+      'rgb(54, 162, 235)'
+    ],
+    hoverOffset: 0,
+    clip: -350,
+  }]
+};
+
+const chart = new Chart(LPctx, {
+  type: 'line',
+  data: linearPotData,
+  options: {
+    responsive: false,
+    animation: { duration: 0 },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 4096
+      }
+    }
+  }
+});
+
+const Steeringchart = new Chart(Steeringctx, {
+  type: 'doughnut',
+  data: steeringData,
+  options: {
+    cutout: "80%",
+    circumference: 270,
+    rotation: -135,
+    radius: "100",
+  }
+});
+// WebSocket
+//var ws = new WebSocket('ws://192.168.1.112:8080/ws');
+//test server
+var ws = new WebSocket('ws://127.0.0.1:8080');
+var sampleCount = 0;
+
+ws.onopen = function() { 
+  document.getElementById('data').innerHTML = 'Connected'; 
+};
+
+ws.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.message === 'connected') return;
+    console.log(e.data);
+
+    // Update DOM
+    document.getElementById('data').innerHTML = 'Value: ' + data.raw;
+    document.getElementById('Steering_angle').innerHTML = (-135 + 270 * data.angle/4096).toFixed(2) + "°";
+
+    // Update charts
+    linearPotData.labels.push(sampleCount++);
+    linearPotData.datasets[0].data.push(data.raw);
+
+    if (linearPotData.labels.length > maxDataPoints) {
+        linearPotData.labels.shift();
+        linearPotData.datasets[0].data.shift();
+    }
+
+    angle = data.angle;
+    steeringData.datasets[0].data[0] = angle;
+    steeringData.datasets[0].data[1] = 4096 - angle;
+
+
+    chart.update();
+    Steeringchart.update();
+};
+
+ws.onerror = function(e) { 
+  document.getElementById('data').innerHTML = 'ERROR'; 
+};
+</script>
+<style>
+    .steering {
+        position:relative;
+        height: 300px; 
+        width: 300px;
+    }
+    #Steering_angle {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+</body>
+</html>
