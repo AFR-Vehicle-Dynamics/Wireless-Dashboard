@@ -1,17 +1,13 @@
-# Usage
-Replace `const char* ssid = "WiFi Network";` and `const char* password = "WifiPassword123";` in .ino file with SSID and password of host wifi network. \
-Serial output will show IP address, ex:
-``` 
-WiFi connected! 
-IP address: 192.168.1.112 
-```
-View dashboard on port 8080, ex: `192.168.1.112:8080`
-## Local Testing
-Run bash:`node server.js` to host websocket on port `8080` for `dashboard.html`, note changes made to must be copied over to the `.ino` file \
-View site from LiveServer \
-Send json data in form `{"raw": "1000", "sample": "1" }` using tool like Postman\
-OR run `node /testScripts/simulateData.js`
+# Local Testing
+Run `bash: node server.js` to host websocket on port `8080` for `dashboard.html`, note changes made to html must be copied over to the `.ino` file \
+Switch websocket to the local server: `var ws = new WebSocket('ws://127.0.0.1:8080');` \
+View site using LiveServer
 
-# Arduino Dependencies 
-**Async TCP** by ESP32Async \
-**ESP Async WebServer** by ESP32Async
+#### Sending testing WebSocket data
+Send json data in form `{raw: "1000", angle: "800", sample: "1" }` using tool like Postman or browser console OR run `node /testScripts/simulateData.js` to send a set of data to populate graphs. \
+JSON data for analog sensors ranges 0-4096, must be sent as strings.
+
+### TODO:
+- Add CSS
+- Create visualization for rest of sensors
+- 2-way communication 
