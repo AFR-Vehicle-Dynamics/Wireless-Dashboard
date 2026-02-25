@@ -1,0 +1,178 @@
+// Dashboard_UI.h
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* basic page styling */
+    body { 
+      font-family: sans-serif; 
+      text-align: center; 
+      color: #333; 
+      margin: 40px; 
+    }
+
+    /* centers all charts on the screen */
+    canvas { margin: auto; display: block; }
+
+    /* container for the steering gauge and text */
+    .steering { 
+      position: relative; 
+      height: 300px; 
+      width: 300px; 
+      margin: 20px auto; 
+    }
+
+    /* centers the degree text inside the steering doughnut */
+    #Steering_angle { 
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      font-size: 1.5rem; 
+      font-weight: bold;
+    }
+
+    /* simple dividers to separate the different sensor sections */
+    .section-divider { 
+      margin-top: 40px; 
+      border-top: 1px solid #ccc; 
+      padding-top: 20px; 
+    }
+
+    /* styling for the thermal telemetry area */
+    .thermal { 
+      margin-top: 40px; 
+      border-top: 1px solid #ccc; 
+      padding-top: 20px; 
+      border-radius: 8px;
+      padding-bottom: 20px;
+    }
+
+    .thermal-data { font-size: 1.1rem; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>Linear Pot Data</h1>
+  <div id="data" style="font-size: 1.2rem; margin-bottom: 10px;">No data</div>
+  <canvas id="LP_chart" width="800" height="300"></canvas>
+
+  <div class="section-divider">
+    <h1>Steering Angle</h1>
+    <div class="steering">
+      <p id="Steering_angle">No data</p>
+      <canvas id="Steering_chart" width="300" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="thermal">
+    <h3>Engine Telemetry</h3>
+    <p class="thermal-data">
+      Air: <span id="air_t">No data</span> | 
+      In: <span id="c1_t">No data</span> |
+      Out: <span id="c2_t">No data</span>
+    </p>
+  </div>
+
+  <script>
+    // Chart Data Setup
+    const maxDataPoints = 50;
+    const LPctx = document.getElementById("LP_chart").getContext("2d");
+    const Steeringctx = document.getElementById("Steering_chart").getContext("2d");
+
+    // settings for the linear potentiometer graph
+    const linearPotData = {
+      labels: [],
+      datasets: [{
+        label: "Shock 1",
+        data: [],
+        borderColor: "#4CAF50",
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0 
+      }],
+    };
+
+    // settings for the steering doughnut gauge
+    const steeringData = {
+      labels: [],
+      datasets: [{
+        data: [0, 4096, 4096], 
+        backgroundColor: ["#FF6384", "#36A2EB", "#eee"], // red, blue, and grey spot
+        borderWidth: 0
+      }],
+    };
+
+    // create the scrolling line chart
+    const chart = new Chart(LPctx, {
+      type: "line",
+      data: linearPotData,
+      options: {
+        responsive: false,
+        animation: false,
+        scales: { y: { beginAtZero: true, max: 4096 } }
+      },
+    });
+
+    // create the steering doughnut gauge
+    const Steeringchart = new Chart(Steeringctx, {
+      type: "doughnut",
+      data: steeringData,
+      options: { cutout: "80%", circumference: 270, rotation: -135, radius: "100" },
+    });
+
+    // WebSocket (Connection) Logic
+    // connects to the ESP32 using its current IP address
+    var ws = new WebSocket("ws://" + window.location.hostname + ":8080/ws");
+
+    // runs every time the ESP32 sends new data
+    ws.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+
+      // if sensor is unplugged (returns -1), show "No data" and grey out
+      if (data.raw === -1) {
+        document.getElementById("data").innerText = "No data";
+        document.getElementById("Steering_angle").innerText = "No data";
+        steeringData.datasets[0].backgroundColor = ["#eee", "#eee", "#eee"];
+      } else {
+        // update the text labels with real numbers
+        document.getElementById("data").innerText = "Value: " + data.raw;
+        document.getElementById("Steering_angle").innerText = data.steer + "\u00B0";
+        
+        // use the specific red and blue colors for the gauge
+        steeringData.datasets[0].backgroundColor = ["#FF6384", "#36A2EB", "#eee"];
+
+        // add new data point to the line graph
+        linearPotData.labels.push(data.sample);
+        linearPotData.datasets[0].data.push(data.raw);
+        
+        // remove old data points so the graph scrolls
+        if (linearPotData.labels.length > maxDataPoints) {
+          linearPotData.labels.shift();
+          linearPotData.datasets[0].data.shift();
+        }
+        
+        // update the doughnut gauge pieces
+        steeringData.datasets[0].data[0] = data.raw;
+        steeringData.datasets[0].data[1] = 4096 - data.raw;
+        steeringData.datasets[0].data[2] = 4096;
+      }
+
+      // update thermal labels; check for the -31.5 error code
+      document.getElementById("air_t").innerText = data.air === -31.5 ? "No data" : data.air + "\u00B0C";
+      document.getElementById("c1_t").innerText = data.c1 === -31.5 ? "No data" : data.c1 + "\u00B0C";
+      document.getElementById("c2_t").innerText = data.c2 === -31.5 ? "No data" : data.c2 + "\u00B0C";
+
+      // refresh both charts on the screen
+      chart.update();
+      Steeringchart.update();
+    };
+
+    // basic connection status updates
+    ws.onopen = function() { document.getElementById("data").innerText = "Connected"; };
+    ws.onerror = function() { document.getElementById("data").innerText = "No data"; };
+  </script>
+</body>
+</html>
+)rawliteral";
