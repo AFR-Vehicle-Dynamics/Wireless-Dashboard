@@ -2,13 +2,17 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
-#include "Dashboard_UI.h"
-#include "Thermal_Logic.h"
-#include "Potentiometer_Logic.h"
+#include "src/config/pins.h"
+#include "src/modules/Dashboard_UI.h"
+#include "src/modules/Thermal_Logic.h"
+#include "src/modules/Potentiometer_Logic.h"
+#include "src/modules/IMU.h"
+
+IMU imu;
 
 // Network Configuration
-const char* ssid = "jPhone";
-const char* password = "goodpassword";
+const char* ssid = "Banana phone";
+const char* password = "1234abcd";
 
 AsyncWebServer server(8080);
 AsyncWebSocket ws("/ws");
@@ -38,6 +42,8 @@ void setup() {
   // ADC Configuration
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
+
+  imu.setup();
   
   // Wifi Initalization
   Serial.println("\nConnecting to Wifi...");
@@ -71,16 +77,24 @@ void loop() {
   if (currentTime - lastReadTime >= SAMPLE_RATE) {
     lastReadTime = currentTime;
 
-    int currentPot = readPotRaw();
-    float currentSteer = calculateSteeringAngle(currentPot);
+    int linearPot1 = readPot(Pin::LINEAR1);
+    int currentSteer = readPot(Pin::STEERING);
+
+    imu.update();
+    float pitch = imu.getData().pitch;
+    float yaw = imu.getData().yaw;
+    float roll = imu.getData().roll;
     
     // Constructing the JSON packet
     String jsonData = "{";
-    jsonData += "\"raw\":" + String(currentPot) + ",";
+    jsonData += "\"raw\":" + String(linearPot1) + ",";
     jsonData += "\"steer\":" + String(currentSteer, 1) + ",";
-    jsonData += "\"air\":" + String(getCelsius(PIN_AIR_TEMP), 1) + ",";
-    jsonData += "\"c1\":" + String(getCelsius(PIN_COOLANT_IN), 1) + ",";
-    jsonData += "\"c2\":" + String(getCelsius(PIN_COOLANT_OUT), 1) + ",";
+    jsonData += "\"air\":" + String(getCelsius(Pin::AIR_TEMP), 1) + ",";
+    jsonData += "\"c1\":" + String(getCelsius(Pin::COOLANT_IN), 1) + ",";
+    jsonData += "\"c2\":" + String(getCelsius(Pin::COOLANT_OUT), 1) + ",";
+    jsonData += "\"pitch\":" + String(pitch) + ",";
+    jsonData += "\"roll\":" + String(roll) + ",";
+    jsonData += "\"yaw\":" + String(yaw) + ",";
     jsonData += "\"sample\":" + String(sampleCount++);
     jsonData += "}";
     

@@ -1,11 +1,6 @@
 // Thermal_Logic.h
 #include <Arduino.h>
 
-// Pin Mapping
-const int PIN_AIR_TEMP = 1; // Radiator Air Intake
-const int PIN_COOLANT_IN = 2; // Engine Coolant Inlet
-const int PIN_COOLANT_OUT = 3; // Engine Coolant Outlet
-
 // Calibration and Sensor Parameters
 const float R_BALANCE = 10000.0;
 const float CAL_OFFSET = 2.7;
