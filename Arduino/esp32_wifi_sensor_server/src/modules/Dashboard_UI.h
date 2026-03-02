@@ -12,11 +12,8 @@ const char index_html[] PROGMEM = R"rawliteral(
       color: #333; 
       margin: 40px; 
     }
-
-    /* centers all charts on the screen */
     canvas { margin: auto; display: block; }
 
-    /* container for the steering gauge and text */
     .steering { 
       position: relative; 
       height: 300px; 
@@ -24,7 +21,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       margin: 20px auto; 
     }
 
-    /* centers the degree text inside the steering doughnut */
     #Steering_angle { 
       position: absolute; 
       top: 50%; 
@@ -34,14 +30,12 @@ const char index_html[] PROGMEM = R"rawliteral(
       font-weight: bold;
     }
 
-    /* simple dividers to separate the different sensor sections */
     .section-divider { 
       margin-top: 40px; 
       border-top: 1px solid #ccc; 
       padding-top: 20px; 
     }
 
-    /* styling for the thermal telemetry area */
     .thermal { 
       margin-top: 40px; 
       border-top: 1px solid #ccc; 
@@ -75,13 +69,16 @@ const char index_html[] PROGMEM = R"rawliteral(
     </p>
   </div>
 
+  <canvas id="IMU_chart" width="800" height="300"></canvas>
+
   <script>
     // Chart Data Setup
     const maxDataPoints = 50;
     const LPctx = document.getElementById("LP_chart").getContext("2d");
     const Steeringctx = document.getElementById("Steering_chart").getContext("2d");
+    const IMUctx = document.getElementById("IMU_chart").getContext("2d");
 
-    // settings for the linear potentiometer graph
+    // linear pot graph settings
     const linearPotData = {
       labels: [],
       datasets: [{
@@ -94,7 +91,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       }],
     };
 
-    // settings for the steering doughnut gauge
+    // steering angle chart settings
     const steeringData = {
       labels: [],
       datasets: [{
@@ -104,7 +101,36 @@ const char index_html[] PROGMEM = R"rawliteral(
       }],
     };
 
-    // create the scrolling line chart
+        // linear pot graph settings
+    const imuData = {
+      labels: [],
+      datasets: [{
+        label: "Pitch",
+        data: [],
+        borderColor: "#f55442",
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0 
+      },
+    {
+        label: "Roll",
+        data: [],
+        borderColor: "#42f542",
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0 
+      },
+    {
+        label: "Yaw",
+        data: [],
+        borderColor: "#4272f5",
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0 
+      }],
+    };
+
+    // create linear pot graph
     const chart = new Chart(LPctx, {
       type: "line",
       data: linearPotData,
@@ -120,6 +146,16 @@ const char index_html[] PROGMEM = R"rawliteral(
       type: "doughnut",
       data: steeringData,
       options: { cutout: "80%", circumference: 270, rotation: -135, radius: "100" },
+    });
+
+    const IMUchart = new Chart(IMUctx, {
+      type: "line",
+      data: imuData,
+      options: {
+        responsive: false,
+        animation: false,
+        scales: { y: { min: -90, max: 90 } }
+      },
     });
 
     // WebSocket (Connection) Logic
@@ -140,20 +176,28 @@ const char index_html[] PROGMEM = R"rawliteral(
         document.getElementById("data").innerText = "Value: " + data.raw;
         document.getElementById("Steering_angle").innerText = data.steer + "\u00B0";
         
-        // use the specific red and blue colors for the gauge
         steeringData.datasets[0].backgroundColor = ["#FF6384", "#36A2EB", "#eee"];
 
-        // add new data point to the line graph
+        // graph scrolling
         linearPotData.labels.push(data.sample);
         linearPotData.datasets[0].data.push(data.raw);
         
-        // remove old data points so the graph scrolls
+        imuData.labels.push(data.sample);
+        imuData.datasets[0].data.push(data.pitch);
+        imuData.datasets[1].data.push(data.roll);
+        imuData.datasets[2].data.push(data.yaw);
+        
         if (linearPotData.labels.length > maxDataPoints) {
           linearPotData.labels.shift();
           linearPotData.datasets[0].data.shift();
+
+          imuData.labels.shift();
+          imuData.datasets[0].data.shift();
+          imuData.datasets[1].data.shift();
+          imuData.datasets[2].data.shift();
         }
         
-        // update the doughnut gauge pieces
+        // update steering
         steeringData.datasets[0].data[0] = data.raw;
         steeringData.datasets[0].data[1] = 4096 - data.raw;
         steeringData.datasets[0].data[2] = 4096;
@@ -164,9 +208,10 @@ const char index_html[] PROGMEM = R"rawliteral(
       document.getElementById("c1_t").innerText = data.c1 === -31.5 ? "No data" : data.c1 + "\u00B0C";
       document.getElementById("c2_t").innerText = data.c2 === -31.5 ? "No data" : data.c2 + "\u00B0C";
 
-      // refresh both charts on the screen
+      // refresh charts on screen
       chart.update();
       Steeringchart.update();
+      IMUchart.update();
     };
 
     // basic connection status updates

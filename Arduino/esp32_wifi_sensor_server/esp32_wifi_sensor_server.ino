@@ -88,7 +88,7 @@ void loop() {
     // Constructing the JSON packet
     String jsonData = "{";
     jsonData += "\"raw\":" + String(linearPot1) + ",";
-    jsonData += "\"steer\":" + String(currentSteer, 1) + ",";
+    jsonData += "\"steer\":" + String(currentSteer) + ",";
     jsonData += "\"air\":" + String(getCelsius(Pin::AIR_TEMP), 1) + ",";
     jsonData += "\"c1\":" + String(getCelsius(Pin::COOLANT_IN), 1) + ",";
     jsonData += "\"c2\":" + String(getCelsius(Pin::COOLANT_OUT), 1) + ",";

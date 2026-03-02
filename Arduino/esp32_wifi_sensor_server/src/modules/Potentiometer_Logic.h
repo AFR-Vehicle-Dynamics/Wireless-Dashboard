@@ -3,5 +3,9 @@
 
 int readPot(int pin) {
   int raw = analogRead(pin);
-  return raw;
+
+  if (raw > 0) {
+    return raw;
+  }
+  else return 0;
 }
