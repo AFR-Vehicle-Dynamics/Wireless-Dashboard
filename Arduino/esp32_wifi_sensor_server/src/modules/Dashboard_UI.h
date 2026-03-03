@@ -70,6 +70,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   </div>
 
   <canvas id="IMU_chart" width="800" height="300"></canvas>
+  <canvas id="Accel_chart" width="800" height="300"></canvas>
 
   <script>
     // Chart Data Setup
@@ -77,6 +78,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     const LPctx = document.getElementById("LP_chart").getContext("2d");
     const Steeringctx = document.getElementById("Steering_chart").getContext("2d");
     const IMUctx = document.getElementById("IMU_chart").getContext("2d");
+    const Accelctx = document.getElementById("Accel_chart").getContext("2d");
 
     // linear pot graph settings
     const linearPotData = {
@@ -130,6 +132,34 @@ const char index_html[] PROGMEM = R"rawliteral(
       }],
     };
 
+    const accelData = {
+      labels: [],
+      datasets: [{
+        label: "X",
+        data: [],
+        borderColor: "#f55442",
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0 
+      },
+    {
+        label: "Y",
+        data: [],
+        borderColor: "#42f542",
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0 
+      },
+    {
+        label: "Z",
+        data: [],
+        borderColor: "#4272f5",
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0 
+      }],
+    };
+
     // create linear pot graph
     const chart = new Chart(LPctx, {
       type: "line",
@@ -151,6 +181,16 @@ const char index_html[] PROGMEM = R"rawliteral(
     const IMUchart = new Chart(IMUctx, {
       type: "line",
       data: imuData,
+      options: {
+        responsive: false,
+        animation: false,
+        scales: { y: { min: -90, max: 90 } }
+      },
+    });
+
+    const Accelchart = new Chart(Accelctx, {
+      type: "line",
+      data: accelData,
       options: {
         responsive: false,
         animation: false,
@@ -186,15 +226,26 @@ const char index_html[] PROGMEM = R"rawliteral(
         imuData.datasets[0].data.push(data.pitch);
         imuData.datasets[1].data.push(data.roll);
         imuData.datasets[2].data.push(data.yaw);
-        
+
+        accelData.labels.push(data.sample);
+        accelData.datasets[0].data.push(data.xaccel);
+        accelData.datasets[1].data.push(data.yaccel);
+        accelData.datasets[2].data.push(data.zaccel);
+
         if (linearPotData.labels.length > maxDataPoints) {
           linearPotData.labels.shift();
           linearPotData.datasets[0].data.shift();
-
+        }
+        if(imuData.labels.length > maxDataPoints) {
           imuData.labels.shift();
           imuData.datasets[0].data.shift();
           imuData.datasets[1].data.shift();
           imuData.datasets[2].data.shift();
+
+          accelData.labels.shift();
+          accelData.datasets[0].data.shift();
+          accelData.datasets[1].data.shift();
+          accelData.datasets[2].data.shift();
         }
         
         // update steering
@@ -212,6 +263,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       chart.update();
       Steeringchart.update();
       IMUchart.update();
+      Accelchart.update();
     };
 
     // basic connection status updates

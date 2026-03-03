@@ -2,9 +2,12 @@
 #include <Adafruit_BNO08x.h>
 
 struct euler_t {
-    float yaw;
     float pitch;
     float roll;
+    float yaw;
+    float xaccel;
+    float yaccel;
+    float zaccel;
 };
 
 class IMU
@@ -15,8 +18,8 @@ private:
     Adafruit_BNO08x bno08x;
 public:
     IMU();
-    void setReports(sh2_SensorId_t reportType, long report_interval);
     void setup(void);
+    void setReports(void);
     void update();
     euler_t getData() const;
 };

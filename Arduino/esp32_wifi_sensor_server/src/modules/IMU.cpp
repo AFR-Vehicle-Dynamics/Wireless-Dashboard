@@ -7,19 +7,23 @@ IMU::IMU()
     : bno08x(Pin::BNO08X_RESET)
 {}
 
-#ifdef FAST_MODE
-  // Top frequency is reported to be 1000Hz (but freq is somewhat variable)
-  sh2_SensorId_t reportType = SH2_GYRO_INTEGRATED_RV;
-  long reportIntervalUs = 2000;
-#else
-  // Top frequency is about 250Hz but this report is more accurate
-  sh2_SensorId_t reportType = SH2_ARVR_STABILIZED_RV;
-  long reportIntervalUs = 5000;
-#endif
-void IMU::setReports(sh2_SensorId_t reportType, long report_interval) {
+// #ifdef FAST_MODE
+//   // Top frequency is reported to be 1000Hz (but freq is somewhat variable)
+//   sh2_SensorId_t reportType = SH2_GYRO_INTEGRATED_RV;
+//   long reportIntervalUs = 2000;
+// #else
+//   // Top frequency is about 250Hz but this report is more accurate
+//   sh2_SensorId_t reportType = SH2_ARVR_STABILIZED_RV;
+//   long reportIntervalUs = 5000;
+// #endif
+sh2_SensorId_t reportType = SH2_ARVR_STABILIZED_RV;
+void IMU::setReports(void) {
   Serial.println("Setting desired reports");
-  if (! bno08x.enableReport(reportType, report_interval)) {
+  if (! bno08x.enableReport(SH2_ARVR_STABILIZED_RV)) {
     Serial.println("Could not enable stabilized remote vector");
+  }
+  if (!bno08x.enableReport(SH2_ACCELEROMETER)) {
+    Serial.println("Could not enable accelerometer");
   }
 }
 
@@ -28,7 +32,7 @@ void IMU::setup(void) {
   Serial.begin(115200);
   while (!Serial) delay(10);
 
-  Serial.println("Adafruit BNO08x test!");
+  Serial.println("Adafruit BNO08x init...");
 
   // Try to initialize
   if (!bno08x.begin_SPI(Pin::BNO08X_CS, Pin::BNO08X_INT)) {
@@ -36,7 +40,7 @@ void IMU::setup(void) {
     while (1) { delay(10); }
   }
   Serial.println("BNO08x Found!");
-  setReports(reportType, reportIntervalUs);
+  setReports();
   Serial.println("Reading events");
   delay(100);
 }
@@ -73,7 +77,7 @@ void IMU::update() {
 
   if (bno08x.wasReset()) {
     Serial.print("sensor was reset ");
-    setReports(reportType, reportIntervalUs);
+    setReports();
   }
   
   if (bno08x.getSensorEvent(&sensorValue)) {
@@ -81,9 +85,10 @@ void IMU::update() {
     switch (sensorValue.sensorId) {
       case SH2_ARVR_STABILIZED_RV:
         quaternionToEulerRV(&sensorValue.un.arvrStabilizedRV, &ypr, true);
-      case SH2_GYRO_INTEGRATED_RV:
-        // faster (more noise?)
-        quaternionToEulerGI(&sensorValue.un.gyroIntegratedRV, &ypr, true);
+      case SH2_ACCELEROMETER:
+        orientation.xaccel = sensorValue.un.accelerometer.x;
+        orientation.yaccel = sensorValue.un.accelerometer.y;
+        orientation.zaccel = sensorValue.un.accelerometer.z;
         break;
     }
     // static long last = 0;
