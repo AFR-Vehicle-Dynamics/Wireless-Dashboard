@@ -8,16 +8,23 @@ const char index_html[] PROGMEM = R"rawliteral(
     /* basic page styling */
     body { 
       font-family: sans-serif; 
-      text-align: center; 
       color: #333; 
-      margin: 40px; 
     }
     canvas { margin: auto; display: block; }
 
+    section {
+      display: flex;
+      flex-flow: row;
+      flex-wrap: wrap;
+      gap: 10px;
+      
+      justify-content: space-around;
+    }
+
     .steering { 
       position: relative; 
-      height: 300px; 
-      width: 300px; 
+      height: 200px; 
+      width: 200px; 
       margin: 20px auto; 
     }
 
@@ -30,47 +37,50 @@ const char index_html[] PROGMEM = R"rawliteral(
       font-weight: bold;
     }
 
-    .section-divider { 
-      margin-top: 40px; 
-      border-top: 1px solid #ccc; 
-      padding-top: 20px; 
-    }
-
     .thermal { 
-      margin-top: 40px; 
-      border-top: 1px solid #ccc; 
-      padding-top: 20px; 
       border-radius: 8px;
-      padding-bottom: 20px;
     }
 
     .thermal-data { font-size: 1.1rem; font-family: monospace; }
   </style>
 </head>
 <body>
-  <h1>Linear Pot Data</h1>
-  <div id="data" style="font-size: 1.2rem; margin-bottom: 10px;">No data</div>
-  <canvas id="LP_chart" width="800" height="300"></canvas>
 
-  <div class="section-divider">
-    <h1>Steering Angle</h1>
-    <div class="steering">
-      <p id="Steering_angle">No data</p>
-      <canvas id="Steering_chart" width="300" height="300"></canvas>
+  <div id="data" style="font-size: 1.2rem;">Status: No data</div>
+  <section>
+    <div class="thermal">
+      <h3>Engine Data</h3>
+      <p class="thermal-data">
+        Air: <span id="air_t">No data</span> | 
+        In: <span id="c1_t">No data</span> |
+        Out: <span id="c2_t">No data</span>
+      </p>
     </div>
+
+    <div class="section-divider">
+      <h3 style="text-align: center;">Steering Angle</h3>
+      <div class="steering">
+        <p id="Steering_angle">No data</p>
+        <canvas id="Steering_chart" width="300" height="300"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+
+  <div class="IMU">
+    <h3 style="display: inline-block;">IMU Data</h3>
+    <button onclick="offsetYaw()">reset yaw</button>
+    <canvas id="IMU_chart" width="800" height="300"></canvas>
+    <canvas id="Accel_chart" width="800" height="300"></canvas>
   </div>
 
-  <div class="thermal">
-    <h3>Engine Telemetry</h3>
-    <p class="thermal-data">
-      Air: <span id="air_t">No data</span> | 
-      In: <span id="c1_t">No data</span> |
-      Out: <span id="c2_t">No data</span>
-    </p>
-  </div>
+  <div class="Suspension">
+    <h3>Suspension Travel</h3>
+    <canvas id="LP_chart" width="800" height="300"></canvas>
+  </div>  
 
-  <canvas id="IMU_chart" width="800" height="300"></canvas>
-  <canvas id="Accel_chart" width="800" height="300"></canvas>
+  </section>
 
   <script>
     // Chart Data Setup
@@ -194,7 +204,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       options: {
         responsive: false,
         animation: false,
-        scales: { y: { min: -90, max: 90 } }
+        scales: { y: { min: -5, max: 5 } }
       },
     });
 
@@ -202,18 +212,21 @@ const char index_html[] PROGMEM = R"rawliteral(
     // connects to the ESP32 using its current IP address
     var ws = new WebSocket("ws://" + window.location.hostname + ":8080/ws");
 
+    currentYaw = 0;
+    yawOffset = 0;
+    function offsetYaw() {yawOffset = currentYaw; console.log("Yaw offset set to " + yawOffset);};
     // runs every time the ESP32 sends new data
     ws.onmessage = function (e) {
       const data = JSON.parse(e.data);
 
       // if sensor is unplugged (returns -1), show "No data" and grey out
       if (data.raw === -1) {
-        document.getElementById("data").innerText = "No data";
+        document.getElementById("data").innerText = "Status: No data";
         document.getElementById("Steering_angle").innerText = "No data";
         steeringData.datasets[0].backgroundColor = ["#eee", "#eee", "#eee"];
       } else {
         // update the text labels with real numbers
-        document.getElementById("data").innerText = "Value: " + data.raw;
+        document.getElementById("data").innerText = "Status: Connected";
         document.getElementById("Steering_angle").innerText = data.steer + "\u00B0";
         
         steeringData.datasets[0].backgroundColor = ["#FF6384", "#36A2EB", "#eee"];
@@ -225,8 +238,9 @@ const char index_html[] PROGMEM = R"rawliteral(
         imuData.labels.push(data.sample);
         imuData.datasets[0].data.push(data.pitch);
         imuData.datasets[1].data.push(data.roll);
-        imuData.datasets[2].data.push(data.yaw);
-
+        imuData.datasets[2].data.push(data.yaw - yawOffset);
+        currentYaw = imuData.datasets[2].data.at(-1);
+        
         accelData.labels.push(data.sample);
         accelData.datasets[0].data.push(data.xaccel);
         accelData.datasets[1].data.push(data.yaccel);
@@ -267,8 +281,9 @@ const char index_html[] PROGMEM = R"rawliteral(
     };
 
     // basic connection status updates
-    ws.onopen = function() { document.getElementById("data").innerText = "Connected"; };
-    ws.onerror = function() { document.getElementById("data").innerText = "No data"; };
+    ws.onopen = function() { document.getElementById("data").innerText = "Status: Connected"; };
+    ws.onerror = function() { document.getElementById("data").innerText = "Status: No data"; };
+ 
   </script>
 </body>
 </html>
