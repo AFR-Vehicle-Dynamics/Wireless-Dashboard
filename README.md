@@ -1,5 +1,8 @@
 # Usage
-Replace `const char* ssid = "WiFi Network";` and `const char* password = "WifiPassword123";` in .ino file with SSID and password of host wifi network. \
+### Config
+Set host Wifi network in `src/dashboardServer.h` \
+All pins are set in `src/config/pins.h` \ 
+### Viewing
 Serial output will show IP address, ex:
 ``` 
 WiFi connected! 

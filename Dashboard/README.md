@@ -8,6 +8,4 @@ Send json data in form `{raw: "1000", angle: "800", sample: "1" }` using tool li
 JSON data for analog sensors ranges 0-4096, must be sent as strings.
 
 ### TODO:
-- Add CSS
-- Create visualization for rest of sensors
 - 2-way communication 
