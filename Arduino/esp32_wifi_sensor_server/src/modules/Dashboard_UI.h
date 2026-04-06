@@ -210,7 +210,10 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     // WebSocket (Connection) Logic
     // connects to the ESP32 using its current IP address
-    var ws = new WebSocket("ws://" + window.location.hostname + ":8080/ws");
+    const host = window.location.hostname || '127.0.0.1';
+    const gateway = 'ws://${host}:8080/ws';
+
+    var ws = newWebSocket(gateway);
 
     currentYaw = 0;
     yawOffset = 0;
