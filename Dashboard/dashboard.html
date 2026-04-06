@@ -207,8 +207,11 @@
     });
 
     // WebSocket (Connection) Logic
-    // connects to the ESP32 using its current IP address
-    var ws = new WebSocket("ws://" + window.location.hostname + ":8080/ws");
+    // Automatically detects if we are on the car's IP or testing locally
+      const host = window.location.hostname || '127.0.0.1';
+      const gateway = `ws://${host}:8080/ws`;
+
+      var ws = new WebSocket(gateway);
 
     currentYaw = 0;
     yawOffset = 0;
