@@ -16,4 +16,8 @@ namespace Pin {
     static constexpr uint8_t LINEAR1 = 39;
     static constexpr uint8_t LINEAR2 = 36;
     static constexpr uint8_t STEERING = 34;
+
+    //GPS
+    static constexpr uint8_t GPS_TX = 21;
+    static constexpr uint8_t GPS_RX = 22;
 }
