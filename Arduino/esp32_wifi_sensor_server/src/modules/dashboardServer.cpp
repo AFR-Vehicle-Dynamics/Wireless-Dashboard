@@ -24,14 +24,21 @@ void dashboardServer::setup() {
   Serial.println("\nConnecting to Wifi...");
   WiFi.begin(dashboardServer::ssid, dashboardServer::password);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  
+int time = 0; 
+while (WiFi.status() != WL_CONNECTED && time < 10000) { 
+  delay(500);
+  Serial.print(".");
+  time += 500;
+} 
+
+if (WiFi.status() != WL_CONNECTED) { 
+  Serial.println("\nFailed to connect to Wifi.");
+  return;
+} else {
   Serial.println("\nWifi Connected!");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+}
 
   // Web Socket Configuration
   ws.onEvent(onWebSocketEvent);
