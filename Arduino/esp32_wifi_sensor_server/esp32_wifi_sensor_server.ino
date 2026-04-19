@@ -16,6 +16,7 @@ unsigned long lastReadTime = 0;
 int sampleCount = 0;
 
 void setup() {
+  delay(1000);
   Serial.begin(115200);
 
   // ADC Configuration
@@ -33,6 +34,8 @@ void loop() {
     lastReadTime = currentTime;
 
     int linearPot1 = readPot(Pin::LINEAR1);
+    int linearPot2 = readPot(Pin::LINEAR2);
+
     int currentSteer = readPot(Pin::STEERING);
 
     imu.update();
@@ -46,6 +49,7 @@ void loop() {
     // Constructing the JSON packet
     String jsonData = "{";
     jsonData += "\"raw\":" + String(linearPot1) + ",";
+    jsonData += "\"raw2\":" + String(linearPot1) + ",";
     jsonData += "\"steer\":" + String(currentSteer) + ",";
     jsonData += "\"air\":" + String(getCelsius(Pin::AIR_TEMP), 1) + ",";
     jsonData += "\"c1\":" + String(getCelsius(Pin::COOLANT_IN), 1) + ",";
