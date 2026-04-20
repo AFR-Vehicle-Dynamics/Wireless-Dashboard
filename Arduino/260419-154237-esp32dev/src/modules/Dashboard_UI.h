@@ -1,6 +1,5 @@
 // Dashboard_UI.h
 const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE html>
 <html>
 <head>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -211,9 +210,9 @@ const char index_html[] PROGMEM = R"rawliteral(
     // WebSocket (Connection) Logic
     // connects to the ESP32 using its current IP address
     const host = window.location.hostname || '127.0.0.1';
-    const gateway = 'ws://${host}:8080/ws';
+    const gateway = `ws://${host}:8080/ws`;
 
-    var ws = newWebSocket(gateway);
+    var ws = new WebSocket(gateway);
 
     currentYaw = 0;
     yawOffset = 0;

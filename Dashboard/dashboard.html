@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 <head>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -207,11 +206,11 @@
     });
 
     // WebSocket (Connection) Logic
-    // Automatically detects if we are on the car's IP or testing locally
-      const host = window.location.hostname || '127.0.0.1';
-      const gateway = `ws://${host}:8080/ws`;
+    // connects to the ESP32 using its current IP address
+    const host = window.location.hostname || '127.0.0.1';
+    const gateway = `ws://${host}:8080/ws`;
 
-      var ws = new WebSocket(gateway);
+    var ws = new WebSocket(gateway);
 
     currentYaw = 0;
     yawOffset = 0;
