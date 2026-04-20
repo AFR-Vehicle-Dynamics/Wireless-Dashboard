@@ -2,8 +2,8 @@
 #include <WiFi.h>
 #include "config/pins.h"
 #include "modules/Dashboard_UI.h"
-#include "modules/Thermal_Logic.cpp"
-#include "modules/Potentiometer_Logic.cpp"
+#include "modules/Thermal_Logic.c"
+#include "modules/Potentiometer_Logic.c"
 #include "modules/IMU.h"
 #include "modules/dashboardServer.h"
 
