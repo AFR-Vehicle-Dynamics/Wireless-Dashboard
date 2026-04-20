@@ -15,7 +15,7 @@ float getCelsius(int pin) {
   int rawAdc = analogRead(pin);
 
   // Returns -31.5 to signal a hardware error or open circuit
-  if (rawAdc <= 100 || rawAdc >= 4000) return -31.5;
+  //if (rawAdc <= 100 || rawAdc >= 4000) return -31.5;
 
   // Calculate thermistor resistance based on the 3.3V reference voltage
   float voltage = (rawAdc * 3.3) / 4095.0;
