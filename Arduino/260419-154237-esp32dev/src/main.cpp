@@ -2,13 +2,13 @@
 #include <WiFi.h>
 #include "config/pins.h"
 #include "modules/Dashboard_UI.h"
-#include "modules/Thermal_Logic.h"
-#include "modules/Potentiometer_Logic.h"
+#include "modules/Thermal_Logic.cpp"
+#include "modules/Potentiometer_Logic.cpp"
 #include "modules/IMU.h"
 #include "modules/dashboardServer.h"
 
 IMU imu;
-dashboardServer dashboardServer;
+dashboardServer server;
 
 // System Timing
 const int SAMPLE_RATE = 100; // milliseconds between readings
@@ -24,7 +24,7 @@ void setup() {
   analogSetAttenuation(ADC_11db);
 
   imu.setup();
-  dashboardServer.setup();
+  server.setup();
 }
 
 void loop() {
@@ -64,12 +64,12 @@ void loop() {
     jsonData += "}";
     
     // Send to all connected WebSocket clients
-    dashboardServer.sendData(jsonData);
+    server.sendData(jsonData);
 
     // Print to Serial for debugging
     Serial.println(jsonData);
   }
 
   // Clean up disconnected clients
-  dashboardServer.cleanClients();
+  server.cleanClients();
 }
