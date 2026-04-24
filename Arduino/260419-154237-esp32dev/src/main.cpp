@@ -1,14 +1,14 @@
 // esp32_wifi_sensor_server.ino
 #include <WiFi.h>
-#include "src/config/pins.h"
-#include "src/modules/Dashboard_UI.h"
-#include "src/modules/Thermal_Logic.h"
-#include "src/modules/Potentiometer_Logic.h"
-#include "src/modules/IMU.h"
-#include "src/modules/dashboardServer.h"
+#include "config/pins.h"
+#include "modules/Dashboard_UI.h"
+#include "modules/Thermal_Logic.c"
+#include "modules/Potentiometer_Logic.c"
+#include "modules/IMU.h"
+#include "modules/dashboardServer.h"
 
 IMU imu;
-dashboardServer dashboardServer;
+dashboardServer server;
 
 // System Timing
 const int SAMPLE_RATE = 100; // milliseconds between readings
@@ -24,7 +24,7 @@ void setup() {
   analogSetAttenuation(ADC_11db);
 
   imu.setup();
-  dashboardServer.setup();
+  server.setup();
 }
 
 void loop() {
@@ -64,12 +64,12 @@ void loop() {
     jsonData += "}";
     
     // Send to all connected WebSocket clients
-    dashboardServer.sendData(jsonData);
+    server.sendData(jsonData);
 
     // Print to Serial for debugging
     Serial.println(jsonData);
   }
 
   // Clean up disconnected clients
-  dashboardServer.cleanClients();
+  server.cleanClients();
 }

@@ -5,10 +5,16 @@
     <title>AFR Telemetry Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+      :root {
+        /* AFR Team Colors */
+        --afr-blue: #005279;
+        --afr-gold: #f5a103;
+      }
+
       /* General page styling */
       body {
         font-family: sans-serif;
-        color: #333;
+        color: black;
         background-color: #f4f4f4;
         margin: 0;
       }
@@ -16,10 +22,10 @@
       /* Status bar for connection info */
       #status-bar {
         padding: 10px 20px;
-        background: #333;
+        background: var(--afr-blue);
         color: #fff;
         font-weight: bold;
-        border-bottom: 2px solid #000;
+        border-bottom: 2px solid var(--afr-gold);
       }
 
       /* Responsive grid layout */
@@ -48,18 +54,21 @@
 
       /* Individual card styling */
       .card {
-        border: 1px solid #000;
         padding: 15px;
         background-color: #fff;
         display: flex;
         flex-direction: column;
+
+        border: 1px solid #ddd;
+        border-top: 5px solid var(--afr-gold);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .card-header {
         font-size: 0.8rem;
         font-weight: bold;
         text-transform: uppercase;
-        color: #555;
+        color: #333;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -71,6 +80,7 @@
         font-size: 3rem;
         font-weight: bold;
         text-align: center;
+        color: black;
         margin: 10px 0;
       }
 
@@ -85,9 +95,13 @@
       }
 
       button {
-        font-size: 0.7rem;
+        background-color: var(--afr-gold);
+        border: none;
+        border-radius: 3px;
+        font-weight: bold;
+        color: black;
         cursor: pointer;
-        padding: 2px 5px;
+        padding: 4px 8px;
       }
     </style>
   </head>
@@ -99,7 +113,7 @@
     <div class="dashboard-grid">
       <div class="card" id="engine-card">
         <div class="card-header">Engine Temperatures</div>
-        <div class="card-value"><span id="c1_main">--</span>&deg;C</div>
+        <div class="card-value"><span id="coolant_in_val">--</span>&deg;C</div>
         <div
           style="
             display: flex;
@@ -108,8 +122,8 @@
             font-weight: bold;
           "
         >
-          <div>Air: <span id="air_data">--</span>&deg;C</div>
-          <div>Out: <span id="c2_data">--</span>&deg;C</div>
+          <div>Air: <span id="air_temp_val">--</span>&deg;C</div>
+          <div>Out: <span id="coolant_out_val">--</span>&deg;C</div>
         </div>
         <div class="chart-container">
           <canvas id="thermal_chart"></canvas>
@@ -121,15 +135,15 @@
           IMU Data (Pitch)
           <button onclick="offsetYaw()">Reset Yaw</button>
         </div>
-        <div class="card-value"><span id="pitch_main">--</span>&deg;</div>
+        <div class="card-value"><span id="pitch_val">--</span>&deg;</div>
         <div class="chart-container">
           <canvas id="imu_chart"></canvas>
         </div>
       </div>
 
       <div class="card" id="gforce-card">
-        <div class="card-header">G-Force Data</div>
-        <div class="card-value"><span id="accel_main">--</span> G</div>
+        <div class="card-header">G-Force Data (Lateral)</div>
+        <div class="card-value"><span id="accel_val">--</span> G</div>
         <div class="chart-container">
           <canvas id="accel_chart"></canvas>
         </div>
@@ -137,15 +151,38 @@
 
       <div class="card" id="steering-card">
         <div class="card-header">Steering Input</div>
-        <div class="card-value"><span id="steer_main">--</span>&deg;</div>
-        <div class="chart-container">
+        <div class="chart-container" style="position: relative; height: 250px">
+          <div
+            style="
+              position: absolute;
+              top: 60%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;
+            "
+          >
+            <span
+              id="steer_val"
+              style="font-size: 3.5rem; font-weight: bold; line-height: 1"
+              >--</span
+            >
+
+            <span
+              style="
+                font-size: 1.5rem;
+                font-weight: bold;
+                vertical-align: 1.5rem;
+              "
+              >&deg;</span
+            >
+          </div>
           <canvas id="steering_chart"></canvas>
         </div>
       </div>
 
       <div class="card" id="suspension-card">
         <div class="card-header">Suspension Travel</div>
-        <div class="card-value"><span id="susp_main">--</span> mm</div>
+        <div class="card-value"><span id="susp_val">--</span> mm</div>
         <div class="chart-container">
           <canvas id="suspension_chart"></canvas>
         </div>
@@ -153,7 +190,7 @@
     </div>
 
     <script>
-      const maxDataPoints = 50;
+      const maxDataPoints = 150;
       let currentYaw = 0;
       let yawOffset = 0;
 
@@ -169,7 +206,7 @@
           {
             label: "In (C1)",
             data: [],
-            borderColor: "red",
+            borderColor: "#FF6384",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -177,7 +214,7 @@
           {
             label: "Air",
             data: [],
-            borderColor: "blue",
+            borderColor: "#36A2EB",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -185,7 +222,7 @@
           {
             label: "Out (C2)",
             data: [],
-            borderColor: "green",
+            borderColor: "#4BC0C0",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -200,7 +237,7 @@
           {
             label: "Pitch",
             data: [],
-            borderColor: "#f55442",
+            borderColor: "#FF6384",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -208,7 +245,7 @@
           {
             label: "Roll",
             data: [],
-            borderColor: "#42f542",
+            borderColor: "#36A2EB",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -216,7 +253,7 @@
           {
             label: "Yaw",
             data: [],
-            borderColor: "#4272f5",
+            borderColor: "#4BC0C0",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -231,7 +268,7 @@
           {
             label: "X",
             data: [],
-            borderColor: "#f55442",
+            borderColor: "#FF6384",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -239,7 +276,7 @@
           {
             label: "Y",
             data: [],
-            borderColor: "#42f542",
+            borderColor: "#36A2EB",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -247,7 +284,7 @@
           {
             label: "Z",
             data: [],
-            borderColor: "#4272f5",
+            borderColor: "#4BC0C0",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -260,7 +297,7 @@
         labels: [],
         datasets: [
           {
-            data: [4096, 4096, 0],
+            data: [0, 4096, 4096],
             backgroundColor: ["#FF6384", "#36A2EB", "#eee"], // red, blue, and grey spot
             borderWidth: 0,
           },
@@ -274,7 +311,7 @@
           {
             label: "Shock 1",
             data: [],
-            borderColor: "#4CAF50",
+            borderColor: "#005279",
             borderWidth: 2,
             fill: false,
             pointRadius: 0,
@@ -330,14 +367,16 @@
         type: "doughnut",
         data: steeringData,
         options: {
-          cutout: "80%",
+          cutout: "82%",
           circumference: 270,
           rotation: -135,
           maintainAspectRatio: false,
           layout: {
-            padding: {
-              top: 10,
-              bottom: 10,
+            padding: 0,
+          },
+          plugins: {
+            legend: {
+              display: false,
             },
           },
         },
@@ -367,79 +406,76 @@
 
       // runs every time the ESP32 sends new data
       ws.onmessage = function (e) {
-        const data = JSON.parse(e.data);
+        try {
+          const data = JSON.parse(e.data);
 
-        // if sensor is unplugged (returns -1), show "No data" and grey out
-        if (data.raw === -1) {
-          document.getElementById("conn-status").innerText = "No data";
-          document.getElementById("steer_main").innerText = "No data";
-          steeringData.datasets[0].backgroundColor = ["#eee", "#eee", "#eee"];
-        } else {
-          // update the text labels with real numbers
-          document.getElementById("conn-status").innerText = "Connected";
-          steeringData.datasets[0].backgroundColor = [
-            "#FF6384",
-            "#36A2EB",
-            "#eee",
-          ];
+          // if sensor is unplugged (returns -1), show "No data" and grey out
+          if (data.raw <= 0) {
+            document.getElementById("conn-status").innerText = "No data";
+            document.getElementById("steer_val").innerText = "No data";
+          } else {
+            // update the text labels with real numbers
+            document.getElementById("conn-status").innerText = "Connected";
 
-          // update readouts
-          document.getElementById("c1_main").innerText =
-            data.c1 === -31.5 ? "--" : data.c1;
-          document.getElementById("air_data").innerText =
-            data.air === -31.5 ? "--" : data.air;
-          document.getElementById("c2_data").innerText =
-            data.c2 === -31.5 ? "--" : data.c2;
-          document.getElementById("pitch_main").innerText =
-            data.pitch === -31.5 ? "--" : data.pitch;
-          document.getElementById("accel_main").innerText =
-            data.yaccel === -1 ? "--" : data.yaccel;
-          document.getElementById("steer_main").innerText =
-            data.steer === -1 ? "--" : data.steer;
-          document.getElementById("susp_main").innerText =
-            data.raw === -1 ? "--" : data.raw;
+            // update readouts
+            document.getElementById("coolant_in_val").innerText =
+              data.c1 === -31.5 ? "--" : data.c1;
+            document.getElementById("air_temp_val").innerText =
+              data.air === -31.5 ? "--" : data.air;
+            document.getElementById("coolant_out_val").innerText =
+              data.c2 === -31.5 ? "--" : data.c2;
+            document.getElementById("pitch_val").innerText = data.pitch;
+            document.getElementById("accel_val").innerText =
+              data.yaccel === -1 ? "--" : data.yaccel;
+            document.getElementById("steer_val").innerText = data.steer =
+              data.steer;
+            document.getElementById("susp_val").innerText = data.raw = data.raw;
 
-          // push data to charts
-          thermalData.labels.push(data.sample);
-          thermalData.datasets[0].data.push(data.c1);
-          thermalData.datasets[1].data.push(data.air);
-          thermalData.datasets[2].data.push(data.c2);
+            // push data to charts
+            thermalData.labels.push(data.sample);
+            thermalData.datasets[0].data.push(data.c1);
+            thermalData.datasets[1].data.push(data.air);
+            thermalData.datasets[2].data.push(data.c2);
 
-          imuData.labels.push(data.sample);
-          imuData.datasets[0].data.push(data.pitch);
-          imuData.datasets[1].data.push(data.roll);
-          imuData.datasets[2].data.push(data.yaw - yawOffset);
-          currentYaw = imuData.datasets[2].data.at(-1);
+            imuData.labels.push(data.sample);
+            imuData.datasets[0].data.push(data.pitch);
+            imuData.datasets[1].data.push(data.roll);
+            imuData.datasets[2].data.push(data.yaw - yawOffset);
+            currentYaw =
+              imuData.datasets[2].data[imuData.datasets[2].data.length - 1];
 
-          accelData.labels.push(data.sample);
-          accelData.datasets[0].data.push(data.xaccel);
-          accelData.datasets[1].data.push(data.yaccel);
-          accelData.datasets[2].data.push(data.zaccel);
+            accelData.labels.push(data.sample);
+            accelData.datasets[0].data.push(data.xaccel);
+            accelData.datasets[1].data.push(data.yaccel);
+            accelData.datasets[2].data.push(data.zaccel);
 
-          linearPotData.labels.push(data.sample);
-          linearPotData.datasets[0].data.push(data.raw);
+            linearPotData.labels.push(data.sample);
+            linearPotData.datasets[0].data.push(data.raw);
 
-          // update steering
-          steeringData.datasets[0].data[0] = data.raw;
-          steeringData.datasets[0].data[1] = 4096 - data.raw;
-          steeringData.datasets[0].data[2] = 0;
-        }
-
-        // updates graph data
-        const datasets = [thermalData, imuData, accelData, linearPotData];
-        datasets.forEach((d) => {
-          if (d.labels.length > maxDataPoints) {
-            d.labels.shift();
-            d.datasets.forEach((s) => s.data.shift());
+            // update steering
+            steeringData.datasets[0].data[0] = data.raw;
+            steeringData.datasets[0].data[1] = 4096 - data.raw;
+            steeringData.datasets[0].data[2] = 4096;
           }
-        });
 
-        // refresh charts on screen
-        thermalChart.update();
-        imuChart.update();
-        accelChart.update();
-        steeringChart.update();
-        lpChart.update();
+          // updates graph data
+          const datasets = [thermalData, imuData, accelData, linearPotData];
+          datasets.forEach((d) => {
+            if (d.labels.length > maxDataPoints) {
+              d.labels.shift();
+              d.datasets.forEach((s) => s.data.shift());
+            }
+          });
+
+          // refresh charts on screen
+          thermalChart.update();
+          imuChart.update();
+          accelChart.update();
+          steeringChart.update();
+          lpChart.update();
+        } catch (err) {
+          console.log("Malformed packet skipped: ", err);
+        }
       };
 
       // basic connection status updates
