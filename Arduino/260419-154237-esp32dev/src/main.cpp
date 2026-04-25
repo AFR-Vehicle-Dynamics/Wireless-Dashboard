@@ -49,11 +49,14 @@ void loop() {
     // Constructing the JSON packet
     String jsonData = "{";
     jsonData += "\"raw\":" + String(linearPot1) + ",";
-    jsonData += "\"raw2\":" + String(linearPot1) + ",";
+    jsonData += "\"raw2\":" + String(linearPot2) + ",";
     jsonData += "\"steer\":" + String(currentSteer) + ",";
-    jsonData += "\"air\":" + String(getCelsius(Pin::AIR_TEMP), 1) + ",";
-    jsonData += "\"c1\":" + String(getCelsius(Pin::COOLANT_IN), 1) + ",";
-    jsonData += "\"c2\":" + String(getCelsius(Pin::COOLANT_OUT), 1) + ",";
+    // jsonData += "\"air\":" + String(getCelsius(Pin::AIR_TEMP), 1) + ",";
+    // jsonData += "\"c1\":" + String(getCelsius(Pin::COOLANT_IN), 1) + ",";
+    // jsonData += "\"c2\":" + String(getCelsius(Pin::COOLANT_OUT), 1) + ",";
+    jsonData += "\"air\":" + String(readPot(Pin::AIR_TEMP)) + ",";
+    jsonData += "\"c1\":" + String(readPot(Pin::COOLANT_IN)) + ",";
+    jsonData += "\"c2\":" + String(readPot(Pin::COOLANT_OUT)) + ",";
     jsonData += "\"pitch\":" + String(pitch) + ",";
     jsonData += "\"roll\":" + String(roll) + ",";
     jsonData += "\"yaw\":" + String(yaw) + ",";
