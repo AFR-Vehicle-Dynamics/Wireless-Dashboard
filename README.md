@@ -10,7 +10,7 @@ IP address: 192.168.1.112
 ```
 View dashboard on port 8080, ex: `192.168.1.112:8080`
 ### Local Testing
-The dashboard now automatically detects if you are testing locally or on the car.
+The dashboard now automatically detects if you are testing locally or on the car. \
 Run bash:`node server.js` to host websocket on port `8080` for `dashboard.html`, note changes made to must be copied over to the `.ino` file \
 View site from LiveServer \
 Send json data in form `{"raw": "1000", "sample": "1" }` using tool like Postman \
