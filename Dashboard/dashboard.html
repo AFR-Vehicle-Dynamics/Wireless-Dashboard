@@ -355,7 +355,7 @@
           responsive: true,
           maintainAspectRatio: false,
           animation: false,
-          scales: { y: { min: -5, max: 5 } },
+          scales: { y: { min: -3, max: 3 } },
         },
       });
 
@@ -390,17 +390,17 @@
         type: "line",
         data: linearPotData,
         options: {
-          responsive: true,
+          responsive: false,
           maintainAspectRatio: false,
           animation: false,
-          scales: { y: { beginAtZero: true, max: 4096 } },
+          scales: { y: { beginAtZero: true, max: 50 } },
         },
       });
 
       // WebSocket (Connection) Logic
       // Automatically detects if we are on the car's IP or testing locally
       const host = window.location.hostname || "127.0.0.1";
-      const gateway = `ws://${host}:8080/ws`;
+      const gateway = `ws://${host}:8081/ws`;
 
       var ws = new WebSocket(gateway);
 
@@ -417,6 +417,9 @@
             // update the text labels with real numbers
             document.getElementById("conn-status").innerText = "Connected";
 
+            const steerDeg = (((data.steer - 2048) / 2048) * 135).toFixed(1);
+            const suspMM = ((data.raw / 4095) * 50).toFixed(1);
+
             // update readouts
             document.getElementById("coolant_in_val").innerText =
               data.c1 === -31.5 ? "--" : data.c1;
@@ -427,9 +430,8 @@
             document.getElementById("pitch_val").innerText = data.pitch;
             document.getElementById("accel_val").innerText =
               data.yaccel === -1 ? "--" : data.yaccel;
-            document.getElementById("steer_val").innerText = data.steer =
-              data.steer;
-            document.getElementById("susp_val").innerText = data.raw = data.raw;
+            document.getElementById("steer_val").innerText = steerDeg;
+            document.getElementById("susp_val").innerText = suspMM;
 
             // push data to charts
             thermalData.labels.push(data.sample);
@@ -450,7 +452,7 @@
             accelData.datasets[2].data.push(data.zaccel);
 
             linearPotData.labels.push(data.sample);
-            linearPotData.datasets[0].data.push(data.raw);
+            linearPotData.datasets[0].data.push(suspMM);
 
             // update steering
             steeringData.datasets[0].data[0] = data.raw;
