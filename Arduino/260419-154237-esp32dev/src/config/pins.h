@@ -13,9 +13,9 @@ namespace Pin {
     static constexpr uint8_t COOLANT_OUT = 33; // Engine Coolant Outlet
 
     //Pots
-    static constexpr uint8_t LINEAR1 = 39;
+    static constexpr uint8_t LINEAR1 = 34;
     static constexpr uint8_t LINEAR2 = 36;
-    static constexpr uint8_t STEERING = 34;
+    static constexpr uint8_t STEERING = 39;
 
     //GPS
     static constexpr uint8_t GPS_TX = 21;
