@@ -83,6 +83,114 @@ const char index_html[] PROGMEM = R"rawliteral(
         In: <span id="c1_t">No data</span> |
         Out: <span id="c2_t">No data</span>
       </p>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AFR Telemetry Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        /* AFR Team Colors */
+        --afr-blue: #005279;
+        --afr-gold: #f5a103;
+      }
+
+      /* General page styling */
+      body {
+        font-family: sans-serif;
+        color: black;
+        background-color: #f4f4f4;
+        margin: 0;
+      }
+
+      /* Status bar for connection info */
+      #status-bar {
+        padding: 10px 20px;
+        background: var(--afr-blue);
+        color: #fff;
+        font-weight: bold;
+        border-bottom: 2px solid var(--afr-gold);
+      }
+
+      /* Responsive grid layout */
+      .dashboard-grid {
+        display: grid;
+        gap: 15px;
+        padding: 15px;
+
+        /* Default to 3 equal columns for desktop*/
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      /* Tablet: If the screen is smaller than 900px, switch to 2 columns */
+      @media (max-width: 900px) {
+        .dashboard-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      /* Phone: If the screen is smaller than 600px, switch to 1 column */
+      @media (max-width: 600px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Individual card styling */
+      .card {
+        padding: 15px;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+
+        border: 1px solid #ddd;
+        border-top: 5px solid var(--afr-gold);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-header {
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+      }
+
+      .card-value {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        color: black;
+        margin: 10px 0;
+      }
+
+      /* Ensures charts stay inside the cards */
+      .chart-container {
+        width: 100%;
+        height: 180px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      button {
+        background-color: var(--afr-gold);
+        border: none;
+        border-radius: 3px;
+        font-weight: bold;
+        color: black;
+        cursor: pointer;
+        padding: 4px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status-bar">
+      AFR Telemetry - Status: <span id="conn-status">Disconnected</span>
     </div>
 
     <div class="section-divider">
@@ -101,6 +209,44 @@ const char index_html[] PROGMEM = R"rawliteral(
       <canvas id="IMU_chart" width="800" height="300"></canvas>
       <canvas id="Accel_chart" width="800" height="300"></canvas>
     </div>
+    <div class="dashboard-grid">
+      <div class="card" id="engine-card">
+        <div class="card-header">Engine Temperatures</div>
+        <div class="card-value"><span id="coolant_in_val">--</span>&deg;C</div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            font-weight: bold;
+          "
+        >
+          <div>Air: <span id="air_temp_val">--</span>&deg;C</div>
+          <div>Out: <span id="coolant_out_val">--</span>&deg;C</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="thermal_chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" id="imu-card">
+        <div class="card-header">
+          IMU Data (Pitch)
+          <button onclick="offsetYaw()">Reset Yaw</button>
+        </div>
+        <div class="card-value"><span id="pitch_val">--</span>&deg;</div>
+        <div class="chart-container">
+          <canvas id="imu_chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" id="gforce-card">
+        <div class="card-header">G-Force Data (Lateral)</div>
+        <div class="card-value"><span id="accel_val">--</span> G</div>
+        <div class="chart-container">
+          <canvas id="accel_chart"></canvas>
+        </div>
+      </div>
 
     <div class="Suspension">
       <h3>Suspension Travel</h3>
@@ -300,4 +446,5 @@ const char index_html[] PROGMEM = R"rawliteral(
   </script>
 </body>
 </html>
+
 )rawliteral";

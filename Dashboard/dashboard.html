@@ -1,65 +1,117 @@
 <!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: sans-serif; color: #333; }
-    canvas { margin: auto; display: block; }
+  <head>
+    <meta charset="UTF-8" />
+    <title>AFR Telemetry Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        /* AFR Team Colors */
+        --afr-blue: #005279;
+        --afr-gold: #f5a103;
+      }
 
-    section {
-      display: flex;
-      flex-flow: row;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-around;
-    }
+      /* General page styling */
+      body {
+        font-family: sans-serif;
+        color: black;
+        background-color: #f4f4f4;
+        margin: 0;
+      }
 
-    .steering { position: relative; height: 200px; width: 200px; margin: 20px auto; }
-    #Steering_angle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; }
-    .thermal { border-radius: 8px; }
-    .thermal-data { font-size: 1.1rem; font-family: monospace; }
+      /* Status bar for connection info */
+      #status-bar {
+        padding: 10px 20px;
+        background: var(--afr-blue);
+        color: #fff;
+        font-weight: bold;
+        border-bottom: 2px solid var(--afr-gold);
+      }
 
-    /* Recorder styles */
-    #recorder {
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 10px 14px;
-      margin: 10px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      background: #f9f9f9;
-    }
+      /* Responsive grid layout */
+      .dashboard-grid {
+        display: grid;
+        gap: 15px;
+        padding: 15px;
 
-    #recIndicator {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #ccc;
-      flex-shrink: 0;
-    }
+        /* Default to 3 equal columns for desktop*/
+        grid-template-columns: repeat(3, 1fr);
+      }
 
-    #recIndicator.recording {
-      background: red;
-      animation: blink 1s infinite;
-    }
+      /* Tablet: If the screen is smaller than 900px, switch to 2 columns */
+      @media (max-width: 900px) {
+        .dashboard-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+      /* Phone: If the screen is smaller than 600px, switch to 1 column */
+      @media (max-width: 600px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    #recorder label { font-size: 0.85rem; color: #555; }
-    #recorder input[type="text"] { font-size: 0.85rem; padding: 2px 5px; width: 130px; }
-    #recorder button { font-size: 0.85rem; padding: 3px 10px; cursor: pointer; }
-    #recStats { font-size: 0.85rem; color: #555; font-family: monospace; }
-  </style>
-</head>
-<body>
+      /* Individual card styling */
+      .card {
+        padding: 15px;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
 
-  <div id="data" style="font-size: 1.2rem;">Status: No data</div>
+        border: 1px solid #ddd;
+        border-top: 5px solid var(--afr-gold);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-  <!-- Recorder Bar -->
+      .card-header {
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+      }
+
+      .card-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        color: black;
+        margin: 10px 0;
+      }
+
+      /* Ensures charts stay inside the cards */
+      .chart-container {
+        width: 100%;
+        height: 180px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      button {
+        background-color: var(--afr-gold);
+        border: none;
+        border-radius: 3px;
+        font-weight: bold;
+        color: black;
+        cursor: pointer;
+        padding: 4px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status-bar">
+      AFR Telemetry - Status: <span id="conn-status">Disconnected</span>
+    </div>
+
+      <!-- Recorder Bar -->
   <div id="recorder">
     <div id="recIndicator"></div>
 
@@ -73,46 +125,93 @@
     <label>Keys (blank = all): <input type="text" id="cfgKeys" placeholder="e.g. steer, pitch, roll"></label>
   </div>
 
-  <section>
-    <div class="thermal">
-      <h3>Engine Data</h3>
-      <p class="thermal-data">
-        Air: <span id="air_t">No data</span> | 
-        In: <span id="c1_t">No data</span> |
-        Out: <span id="c2_t">No data</span>
-      </p>
-    </div>
+    <div class="dashboard-grid">
+      <div class="card" id="engine-card">
+        <div class="card-header">Engine Temperatures</div>
+        <div class="card-value"><span id="coolant_in_val">--</span>&deg;C</div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            font-weight: bold;
+          "
+        >
+          <div>Air: <span id="air_temp_val">--</span>&deg;C</div>
+          <div>Out: <span id="coolant_out_val">--</span>&deg;C</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="thermal_chart"></canvas>
+        </div>
+      </div>
 
-    <div class="section-divider">
-      <h3 style="text-align: center;">Steering Angle</h3>
-      <div class="steering">
-        <p id="Steering_angle">No data</p>
-        <canvas id="Steering_chart" width="300" height="300"></canvas>
+      <div class="card" id="imu-card">
+        <div class="card-header">
+          IMU Data (Pitch)
+          <button onclick="offsetYaw()">Reset Yaw</button>
+        </div>
+        <div class="card-value"><span id="pitch_val">--</span>&deg;</div>
+        <div class="chart-container">
+          <canvas id="imu_chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" id="gforce-card">
+        <div class="card-header">G-Force Data (Lateral)</div>
+        <div class="card-value"><span id="accel_val">--</span> G</div>
+        <div class="chart-container">
+          <canvas id="accel_chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" id="steering-card">
+        <div class="card-header">Steering Input</div>
+        <div class="chart-container" style="position: relative; height: 250px">
+          <div
+            style="
+              position: absolute;
+              top: 60%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;
+            "
+          >
+            <span
+              id="steer_val"
+              style="font-size: 3.5rem; font-weight: bold; line-height: 1"
+              >--</span
+            >
+
+            <span
+              style="
+                font-size: 1.5rem;
+                font-weight: bold;
+                vertical-align: 1.5rem;
+              "
+              >&deg;</span
+            >
+          </div>
+          <canvas id="steering_chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" id="suspension-card">
+        <div class="card-header">Suspension Travel</div>
+        <div class="card-value"><span id="susp_val">--</span> mm</div>
+        <div class="chart-container">
+          <canvas id="suspension_chart"></canvas>
+        </div>
       </div>
     </div>
   </section>
 
-  <section>
-    <div class="IMU">
-      <h3 style="display: inline-block;">IMU Data</h3>
-      <button onclick="offsetYaw()">reset yaw</button>
-      <canvas id="IMU_chart" width="800" height="300"></canvas>
-      <canvas id="Accel_chart" width="800" height="300"></canvas>
-    </div>
-
-    <div class="Suspension">
-      <h3>Suspension Travel</h3>
-      <canvas id="LP_chart" width="800" height="300"></canvas>
-    </div>
-  </section>
-
-  <script>
+<script>
     // ─── Chart Setup ────────────────────────────────────────────────────────
     const maxDataPoints = 50;
-    const LPctx       = document.getElementById("LP_chart").getContext("2d");
-    const Steeringctx = document.getElementById("Steering_chart").getContext("2d");
-    const IMUctx      = document.getElementById("IMU_chart").getContext("2d");
-    const Accelctx    = document.getElementById("Accel_chart").getContext("2d");
+    const LPctx       = document.getElementById("suspension_chart").getContext("2d");
+    const Steeringctx = document.getElementById("steering_chart").getContext("2d");
+    const IMUctx      = document.getElementById("imu_chart").getContext("2d");
+    const Accelctx    = document.getElementById("accel_chart").getContext("2d");
 
     const linearPotData = {
       labels: [],
@@ -295,6 +394,6 @@
 
     ws.onopen  = function() { document.getElementById("data").innerText = "Status: Connected"; };
     ws.onerror = function() { document.getElementById("data").innerText = "Status: No data"; };
-  </script>
-</body>
+    </script>
+  </body>
 </html>
