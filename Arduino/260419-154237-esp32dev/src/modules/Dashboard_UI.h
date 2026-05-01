@@ -300,4 +300,5 @@ const char index_html[] PROGMEM = R"rawliteral(
   </script>
 </body>
 </html>
+
 )rawliteral";
